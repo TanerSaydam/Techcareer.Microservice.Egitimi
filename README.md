@@ -199,11 +199,145 @@ YARP, daha gelişmiş algoritmalar ve özelleştirme sunar:
 | **Ocelot**                                      | API Gateway                | Basit konfigürasyonla reverse-proxy, routing ve temel load-balancing ihtiyaçlarını karşılar.          |
 | **YARP**                                        | Reverse Proxy              | Microsoft destekli, esnek routing ve gelişmiş load-balancing algoritmaları sunar.                      |
 | **Microsoft.AspNetCore.Authentication.JwtBearer** | Authentication           | Gateway ya da servis düzeyinde gelen JWT’leri doğrulamak ve kullanıcı kimliğini çözmek için.          |
-| **Duende IdentityServer**                       | Identity Provider          | OAuth2 / OpenID Connect ile merkezi kimlik doğrulama ve token yönetimi sunar.                         |
 | **Keycloak**                                    | Identity & Access Management | Açık kaynaklı IAM çözümü; OAuth2, OpenID Connect ve SAML protokollerini destekler, kullanıcı yönetimi sağlar. |
 | **Polly**                                       | Resilience / Fault Handling | Retry, timeout, circuit-breaker, fallback gibi dayanıklılık (resilience) politikalarını uygular.       |
 | **Serilog**                                     | Logging                     | Yapılandırılabilir, sink-destekli ve performanslı uygulama log’ları için popüler logging kütüphanesi.   |
 | **OpenTelemetry**                               | Tracing & Metrics           | Dağıtık izleme (distributed tracing) ve metrik toplama altyapısı sağlayarak servisleri gözlemler.      |
 | **Swashbuckle.AspNetCore**                      | API Documentation           | Swagger UI ve OpenAPI tanımı ile servislerin self-documenting olmasını sağlar.                        |
+| **Scalar**                                      | API Documentation           | Scalar UI ve OpenAPI tanımı ile servislerin self-documenting olmasını sağlar.                        |
 | **AutoMapper**                                  | Object Mapping              | DTO ↔ Entity dönüşümlerini konfigürasyon bazlı, hızlı ve hatasız yapmaya yardımcı olur.                |
 | **FluentValidation**                            | Validation                  | Zengin bir doğrulama API’si ile istek modelleri için kuralları açık ve yeniden kullanılabilir tanımlar. |
+
+## YARP Load Balance Example Code
+```json
+// appsettings.json
+{
+  "ReverseProxy": {
+    "Routes": {
+      "route1": {
+        "ClusterId": "cluster1",
+        "Match": {
+          "Path": "{**catch-all}"
+        }
+      }
+    },
+    "Clusters": {
+      "cluster1": {
+        // Yönlendireceğimiz backend adresleri
+        "Destinations": {
+          "backend1": { "Address": "http://backend1:5000/" },
+          "backend2": { "Address": "http://backend2:5000/" }
+        },
+        // --- LoadBalancingPolicy seçenekleri ---
+        "LoadBalancingPolicy": "RoundRobin",           // İstekleri A→B→C… sırayla döndürerek eşit yük dağıtır.
+        //"LoadBalancingPolicy": "PowerOfTwoChoices",    // Rastgele iki backend seçip, daha az yüklü olana yollar.
+        //"LoadBalancingPolicy": "LeastRequests",        // O an en az aktif isteğe sahip backend’i tercih eder.
+        //"LoadBalancingPolicy": "Random",               // Her istekte backend listesinden rastgele birini seçer.
+        //"LoadBalancingPolicy": "CookieStickySessions", // Çerez bazlı oturumlarda kullanıcıyı hep aynı backend’e sabitler.
+
+        "HealthCheck": {
+          "Active": {
+            "Enabled": true,
+            "Interval": "00:00:10",
+            "Policy": "ConsecutiveFailures",
+            "ReactivationPeriod": "00:02:00"
+          },
+          "Passive": {
+            "Enabled": true,
+            "Policy": "TransportFailureRate",
+            "ReactivationPeriod": "00:00:30"
+          }
+        },
+        // Başarısızlık durumunda
+        "Metadata": {
+          // %100 başarısızlık oranında unhealthy say
+          "TransportFailureRateHealthPolicy.RateLimit": "1.0"
+        }
+      }
+    }
+  }
+}
+```
+
+## Keylock
+**Docker Kurulum CLI Komutu**
+```dash
+docker run -d --name keycloak -p 8080:8080 -e KEYCLOAK_ADMIN=admin -e KEYCLOAK_ADMIN_PASSWORD=admin 
+quay.io/keycloak/keycloak:25.0.2 start-dev
+```
+
+**API Documentation**
+```dash
+https://www.keycloak.org/docs-api/latest/rest-api/index.html
+```
+
+**User Account Page**
+```dash
+http://localhost:8080/realms/myrealm/account/
+```
+
+## YARP ile Circuit Breaker
+**Kurulum**
+```dash
+dotnet add package Yarp.ReverseProxy
+dotnet add package Microsoft.Extensions.Http.Polly
+dotnet add package Polly.Extensions.Http
+```
+
+**Program.cs**
+```csharp
+builder.Services.AddSingleton<IForwarderHttpClientFactory, CircuitBreakerHttpClientFactory>()
+```
+
+**CircuitBreakerHttpClientFactory.cs**
+```csharp
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Yarp.ReverseProxy.Forwarder;
+using Polly;
+using Polly.Extensions.Http;
+using System;
+using System.Net.Http;
+
+internal class CircuitBreakerHttpClientFactory : ForwarderHttpClientFactory
+{
+    public CircuitBreakerHttpClientFactory(
+        ILogger<ForwarderHttpClientFactory> logger,
+        IOptions<ForwarderHttpClientFactoryOptions> options)
+        : base(logger, options)
+    { }
+
+    protected override HttpMessageHandler WrapHandler(
+        ForwarderHttpClientContext context,
+        HttpMessageHandler handler)
+    {
+        // 3 hata yakalamadan sonra 30s süreyle open (kırık) duruma geç
+        var circuitBreakerPolicy = HttpPolicyExtensions
+            .HandleTransientHttpError()
+            .CircuitBreakerAsync(
+                handledEventsAllowedBeforeBreaking: 3,
+                durationOfBreak: TimeSpan.FromSeconds(30)
+            );  // :contentReference[oaicite:0]{index=0}
+
+        // Polly’nin PolicyHttpMessageHandler’ı ile sarmala
+        var policyHandler = new PolicyHttpMessageHandler(circuitBreakerPolicy)
+        {
+            InnerHandler = handler
+        };
+
+        // YARP’ın kendi sarma/metric mantığını da koru
+        return base.WrapHandler(context, policyHandler);
+    }
+}
+```
+
+## PostgreSQL Docker Kurulum CLI komutu
+```dash
+docker run --name cartdb-postgres -e POSTGRES_DB=cartdb -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres:latest
+```
+
+## Dbeaver Sitesinin Linki
+```dash
+https://dbeaver.io/download/
+```
+
