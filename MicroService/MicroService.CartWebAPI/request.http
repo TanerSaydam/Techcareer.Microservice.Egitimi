@@ -1,0 +1,8 @@
+# For more info on HTTP files go to https://aka.ms/vs/httpfile
+POST https://localhost:7026
+Content-Type: application/json
+
+{
+    "ProductId":"0196ddd2-992d-7420-aa97-b6206ddb1787",
+    "Quantity": 6
+}

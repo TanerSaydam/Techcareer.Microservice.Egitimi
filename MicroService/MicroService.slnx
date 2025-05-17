@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="MicroService.AppHost/MicroService.AppHost.csproj" />
+  <Project Path="MicroService.CartWebAPI/MicroService.CartWebAPI.csproj" />
+  <Project Path="MicroService.Gateway/MicroService.Gateway.csproj" />
+  <Project Path="MicroService.ProductWebAPI/MicroService.ProductWebAPI.csproj" />
+  <Project Path="MicroService.ServiceDefaults/MicroService.ServiceDefaults.csproj" />
+</Solution>
