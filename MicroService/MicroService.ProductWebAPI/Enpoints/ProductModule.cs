@@ -7,7 +7,7 @@ public static class ProductModule
     public static IEndpointRouteBuilder MapProducts(this IEndpointRouteBuilder app)
     {
 
-        var group = app.MapGroup(string.Empty);
+        RouteGroupBuilder group = app.MapGroup(string.Empty);
 
         group.MapGet("{id}", (Guid id) => //controller dan daha performanslı
         {
@@ -20,8 +20,9 @@ public static class ProductModule
             return Results.Ok(product);
         });
 
-        group.MapGet(string.Empty, () => //controller dan daha performanslı
+        group.MapGet(string.Empty, (IHttpContextAccessor httpContextAccessor) => //controller dan daha performanslı
         {
+            HttpContext? httpContext = httpContextAccessor.HttpContext;
             List<Product> products = new();
             Product product = new()
             {

@@ -1,5 +1,9 @@
 <Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+  </Folder>
   <Project Path="MicroService.AppHost/MicroService.AppHost.csproj" />
+  <Project Path="MicroService.Auth/MicroService.Auth.csproj" Id="eff85ff1-d543-4a4f-ad76-f028a2ef5350" />
   <Project Path="MicroService.CartWebAPI/MicroService.CartWebAPI.csproj" />
   <Project Path="MicroService.Gateway/MicroService.Gateway.csproj" />
   <Project Path="MicroService.ProductWebAPI/MicroService.ProductWebAPI.csproj" />

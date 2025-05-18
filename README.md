@@ -262,8 +262,7 @@ YARP, daha gelişmiş algoritmalar ve özelleştirme sunar:
 ## Keylock
 **Docker Kurulum CLI Komutu**
 ```dash
-docker run -d --name keycloak -p 8080:8080 -e KEYCLOAK_ADMIN=admin -e KEYCLOAK_ADMIN_PASSWORD=admin 
-quay.io/keycloak/keycloak:25.0.2 start-dev
+docker run -d --name keycloak -p 8080:8080 -e KEYCLOAK_ADMIN=admin -e KEYCLOAK_ADMIN_PASSWORD=admin quay.io/keycloak/keycloak:25.0.2 start-dev
 ```
 
 **API Documentation**

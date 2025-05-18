@@ -5,6 +5,9 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
 	<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+
+	  <EnableDefaultContentItems>false</EnableDefaultContentItems>
+	  <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,5 +18,15 @@
   <ItemGroup>
     <ProjectReference Include="..\MicroService.ServiceDefaults\MicroService.ServiceDefaults.csproj" />
   </ItemGroup>
+
+
+	<ItemGroup>
+		<Content Include="appsettings.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="web.config">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
 
 </Project>

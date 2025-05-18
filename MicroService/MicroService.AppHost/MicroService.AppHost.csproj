@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\MicroService.Auth\MicroService.Auth.csproj" />
     <ProjectReference Include="..\MicroService.CartWebAPI\MicroService.CartWebAPI.csproj" />
     <ProjectReference Include="..\MicroService.Gateway\MicroService.Gateway.csproj" />
     <ProjectReference Include="..\MicroService.ProductWebAPI\MicroService.ProductWebAPI.csproj" />   
