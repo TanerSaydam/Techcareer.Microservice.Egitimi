@@ -1,0 +1,34 @@
+services:
+ mssql:
+  image: mcr.microsoft.com/mssql/server:latest
+  container_name: mssql
+  hostname: mssql
+  ports:
+   - "1433:1433"
+  environment:
+    ACCEPT_EULA: "Y"
+    MSSQL_SA_PASSWORD: "Password123!"
+    MSSQL_PID: "Evaluation"
+  volumes:
+   - mssql_data:/var/opt/mssql
+
+ auth-api:
+  build:
+   context: ./eTicaret.AuthWebAPI
+   dockerfile: Dockerfile
+  container_name: AuthWebAPI
+  ports:
+   - 5001:8080
+  depends_on:
+   - mssql
+
+ gateway:
+  build:
+   context: ./eTicaret.Gateway
+   dockerfile: Dockerfile
+  container_name: Gateway
+  ports:
+   - 5000:8080
+
+volumes:
+  mssql_data:
