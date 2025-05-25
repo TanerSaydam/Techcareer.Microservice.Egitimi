@@ -1,4 +1,14 @@
 services:
+ rabbitmq:
+   image: rabbitmq:3-management
+   container_name: rabbitmq
+   hostname: rabbitmq
+   ports:
+     - "5672:5672"
+     - "15672:15672"
+   # volumes:
+   #   - rabbitmq_data:/var/lib/rabbitmq
+   #userId: guest, password: guest
  mssql:
   image: mcr.microsoft.com/mssql/server:latest
   container_name: mssql
@@ -12,15 +22,23 @@ services:
   volumes:
    - mssql_data:/var/opt/mssql
 
- auth-api:
-  build:
-   context: ./eTicaret.AuthWebAPI
-   dockerfile: Dockerfile
-  container_name: AuthWebAPI
+ postgres:
+   image: postgres:latest
+   container_name: postgres
+   ports:
+    - "5432:5432"
+   environment:
+     POSTGRES_USER: postgres
+     POSTGRES_PASSWORD: "1"
+     POSTGRES_DB: product_db
+   volumes:
+    - pg_data:/var/lib/postgresql/data
+
+ consul:
+  image: hashicorp/consul:latest
+  container_name: consul
   ports:
-   - 5001:8080
-  depends_on:
-   - mssql
+   - 8500:8500
 
  gateway:
   build:
@@ -30,5 +48,35 @@ services:
   ports:
    - 5000:8080
 
+ auth-api:
+  build:
+   context: ./eTicaret.AuthWebAPI
+   dockerfile: Dockerfile
+  container_name: auth-api
+  ports:
+   - 5001:8080
+  depends_on:
+   - mssql
+
+ product-api:
+  build:
+   context: ./eTicaret.ProductWebAPI
+   dockerfile: Dockerfile
+  container_name: product-api
+  ports:
+   - 5002:8080
+  depends_on:
+   - postgres
+
+ cart-api:
+  build:
+   context: ./eTicaret.CartWebAPI
+   dockerfile: Dockerfile
+  container_name: cart-api
+  ports:
+   - 5003:8080
+
 volumes:
+  pg_data:
   mssql_data:
+  #rabbitmq_data:

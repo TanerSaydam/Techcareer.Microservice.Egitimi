@@ -340,3 +340,25 @@ docker run --name cartdb-postgres -e POSTGRES_DB=cartdb -e POSTGRES_USER=postgre
 https://dbeaver.io/download/
 ```
 
+## Stealtoe with Consul
+**Documentation**
+```dash
+https://steeltoe.io/guides/service-discovery/consul.html?tabs=dotnet-create1%2Cdotnet-run1%2Cvisualstudio-create2%2Cdotnet-run2
+```
+
+**Docker CLI**
+```dash
+docker run --rm -ti -p 8500:8500 --name=steeltoe_guide_consul consul
+```
+
+**JSON Settings**
+```json
+    "Consul": {
+        "Host": "consul",
+        "Discovery": {
+            "ServiceName": "auth-api",
+            "Hostname": "AuthWebAPI",
+            "Port": "8080"
+        }
+    }
+```
